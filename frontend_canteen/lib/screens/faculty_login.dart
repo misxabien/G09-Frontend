@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'create_account.dart';
+import 'package:frontend_canteen/screens/create_account.dart';
 
-
-class StudentLoginPage extends StatelessWidget {
-  const StudentLoginPage({super.key});
+class FacultyLoginPage extends StatelessWidget {
+  const FacultyLoginPage ({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -87,33 +86,35 @@ class StudentLoginPage extends StatelessWidget {
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                children: [
                   const Text(
-                  "Don't have an account? ",
-                  style: TextStyle(
-                  color: Colors.black87,
-                  fontFamily: 'Montserrat',
-                 ),
-                ),
-                GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                   context,
-                   MaterialPageRoute(builder: (context) => const CreateAccountPage ()),
-              );
-             },
-              child: const Text(
-              "Sign up",
-              style: TextStyle(
-              color: Color(0xFF0047AB),
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Montserrat',
-              decoration: TextDecoration.underline,
+                    "Dont have an account? ",
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontFamily: 'Montserrat',
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: (){
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const CreateAccountPage ()),
+                      );
+                    },
+                  
+                   child: const Text(
+                  "Sign up",
+                   style: TextStyle(
+                   color: Color(0xFF0047AB),
+                   fontWeight: FontWeight.bold,
+                   fontFamily: 'Montserrat',
+                   decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
               ],
             ),
+
               const SizedBox(height: 30),
 
         

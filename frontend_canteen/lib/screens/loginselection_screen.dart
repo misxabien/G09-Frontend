@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_canteen/screens/canteen_login.dart';
+import 'package:frontend_canteen/screens/faculty_login.dart';
 import 'package:frontend_canteen/screens/students_login.dart';
 
 class LoginSelectionPage extends StatelessWidget {
@@ -72,7 +74,10 @@ class LoginSelectionPage extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                // navigate to faculty page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const FacultyLoginPage()),
+                );
               },
               child: const Text(
                 'FACULTY',
@@ -98,7 +103,10 @@ class LoginSelectionPage extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                // Navigate to Canteen Staff Page
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CanteenLoginPage()),
+                );
               },
               child: const Text(
                 'CANTEEN STAFF',

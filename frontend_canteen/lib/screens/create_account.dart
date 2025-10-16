@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'create_account.dart';
+import 'students_login.dart'; // Import your login page
 
-
-class StudentLoginPage extends StatelessWidget {
-  const StudentLoginPage({super.key});
+class CreateAccountPage extends StatelessWidget {
+  const CreateAccountPage ({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFCE8), 
+      backgroundColor: const Color(0xFFFFFCE8), // Light beige background
       body: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-           
+              // Logo
               Image.asset(
-                'assets/images/sdcanteen_logo.png', 
+                'assets/images/sdcanteen_logo.png',
                 width: 180,
                 height: 180,
               ),
@@ -25,7 +24,7 @@ class StudentLoginPage extends StatelessWidget {
 
               // Title
               const Text(
-                "LOGIN",
+                "CREATE ACCOUNT",
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 22,
@@ -34,8 +33,21 @@ class StudentLoginPage extends StatelessWidget {
                 ),
               ),
 
+              const SizedBox(height: 5),
+
+              const Text(
+                "SDCA EMAIL ONLY",
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0047AB),
+                ),
+              ),
+
               const SizedBox(height: 30),
 
+              // SDCA Email Field
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 300, vertical: 10),
                 child: TextField(
@@ -59,6 +71,7 @@ class StudentLoginPage extends StatelessWidget {
                 ),
               ),
 
+              // Create Password Field
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 300, vertical: 10),
                 child: TextField(
@@ -66,7 +79,32 @@ class StudentLoginPage extends StatelessWidget {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color(0xFF0047AB),
-                    hintText: "Password",
+                    hintText: "Create Password",
+                    hintStyle: const TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Montserrat',
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+              ),
+
+              // Confirm Password Field
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 300, vertical: 10),
+                child: TextField(
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFF0047AB),
+                    hintText: "Confirm Password",
                     hintStyle: const TextStyle(
                       color: Colors.white,
                       fontFamily: 'Montserrat',
@@ -85,38 +123,41 @@ class StudentLoginPage extends StatelessWidget {
 
               const SizedBox(height: 10),
 
+              // Already have an account? Login
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                children: [
                   const Text(
-                  "Don't have an account? ",
-                  style: TextStyle(
-                  color: Colors.black87,
-                  fontFamily: 'Montserrat',
-                 ),
-                ),
-                GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                   context,
-                   MaterialPageRoute(builder: (context) => const CreateAccountPage ()),
-              );
-             },
-              child: const Text(
-              "Sign up",
-              style: TextStyle(
-              color: Color(0xFF0047AB),
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Montserrat',
-              decoration: TextDecoration.underline,
+                    "Already have an account? ",
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontFamily: 'Montserrat',
                     ),
                   ),
-                ),
-              ],
-            ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const StudentLoginPage()),
+                      );
+                    },
+                    child: const Text(
+                      "Login",
+                      style: TextStyle(
+                        color: Color(0xFF0047AB),
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Montserrat',
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 30),
 
-        
+              // LOGIN button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0047AB),
@@ -127,7 +168,7 @@ class StudentLoginPage extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  // TODO: Handle login
+                  // TODO: Handle sign up logic
                 },
                 child: const Text(
                   "LOGIN",
