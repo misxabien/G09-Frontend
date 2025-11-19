@@ -1,5 +1,6 @@
-import 'package:frontend_canteen/screens/loginselection_screen.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:frontend_canteen/screens/loginselection_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,63 +12,84 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SDCANTEEN',
       debugShowCheckedModeBanner: false,
+      title: 'SDCanteen',
       home: const SplashScreen(),
     );
   }
 }
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 🎬 Animation controller for total duration
+    _controller = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    );
+
+    // 🎞️ Fade in quickly, fade out slowly and smoothly
+    _animation = TweenSequence([
+      // Fade In (fast)
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 30, // faster (shorter portion of total time)
+      ),
+      // Fade Out (slow)
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeOutQuad)),
+        weight: 70, // slower fade-out
+      ),
+    ]).animate(_controller);
+
+    _controller.forward();
+
+    // ⏰ Navigate after 4 seconds (total animation length)
+    Timer(const Duration(seconds: 4), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const RoleSelectionPage(),
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFCE8),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-             
-              Image.asset(
-                'assets/images/sdcanteen_logo.png',
-                width: 350,
-                height: 350,
-              ),
-              const SizedBox(height: 50),
-
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0047AB),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 60, vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginSelectionPage()),
-                  );
-                },
-                child: const Text(
-                  'Get Started',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: Color(0xFFFFFCE8),
-                    fontSize: 20,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-              ),
-            ],
+      backgroundColor: const Color(0xFFF9F7E9),
+      body: Center(
+        child: FadeTransition(
+          opacity: _animation,
+          child: Image.asset(
+            'assets/images/sdc.png',
+            width: 250,
+            height: 250,
           ),
         ),
       ),
     );
   }
 }
-
