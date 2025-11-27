@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'students_login.dart';
+import 'services/api_service.dart';
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
@@ -9,7 +10,50 @@ class CreateAccountPage extends StatefulWidget {
 }
 
 class _CreateAccountPageState extends State<CreateAccountPage> {
+  // Controllers for all text fields
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
   bool agreeToTerms = false;
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  void _createAccount() async {
+    if (!agreeToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You must agree to the terms")),
+      );
+      return;
+    }
+
+    var result = await ApiService.createAccount(
+      firstNameController.text.trim(),
+      lastNameController.text.trim(),
+      emailController.text.trim(),
+      passwordController.text.trim(),
+      "student", // Change to "faculty" if needed
+    );
+
+    if (result['success']) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const StudentLoginPage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Account creation failed')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +76,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           ),
           child: Row(
             children: [
-              // 🍽️ Left side (logo + title)
+              // Left side (logo + title)
               Expanded(
                 flex: 1,
                 child: Column(
@@ -49,7 +93,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     ),
                     const SizedBox(height: 40),
                     Image.asset(
-                      'assets/images/sdc.png', // Replace with your logo path
+                      'assets/images/sdc.png',
                       width: 230,
                       height: 230,
                     ),
@@ -57,7 +101,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 ),
               ),
 
-              // 🔹 Right side (blue rounded form)
+              // Right side (form)
               Expanded(
                 flex: 1,
                 child: ClipRRect(
@@ -94,22 +138,17 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                           ),
                           const SizedBox(height: 25),
 
-                          // 🔤 First & Last Name Fields (side by side)
+                          // First & Last Name
                           Row(
                             children: [
                               Expanded(
                                 child: TextField(
+                                  controller: firstNameController,
                                   decoration: InputDecoration(
                                     labelText: "First name",
-                                    labelStyle: const TextStyle(
-                                      color: Color(0xFFFFFCE8),
-                                      fontFamily: 'Montserrat',
-                                    ),
+                                    labelStyle: const TextStyle(color: Color(0xFFFFFCE8)),
                                     hintText: "Enter your first name",
-                                    hintStyle: const TextStyle(
-                                      color: Color(0xFFFFFCE8),
-                                      fontFamily: 'Montserrat',
-                                    ),
+                                    hintStyle: const TextStyle(color: Color(0xFFFFFCE8)),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(15),
                                       borderSide: const BorderSide(color: Color(0xFFFFFCE8)),
@@ -119,26 +158,18 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                                       borderSide: const BorderSide(color: Color(0xFFFFFCE8), width: 2),
                                     ),
                                   ),
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFFCE8),
-                                    fontFamily: 'Montserrat',
-                                  ),
+                                  style: const TextStyle(color: Color(0xFFFFFCE8)),
                                 ),
                               ),
                               const SizedBox(width: 15),
                               Expanded(
                                 child: TextField(
+                                  controller: lastNameController,
                                   decoration: InputDecoration(
                                     labelText: "Last name",
-                                    labelStyle: const TextStyle(
-                                      color: Color(0xFFFFFCE8),
-                                      fontFamily: 'Montserrat',
-                                    ),
+                                    labelStyle: const TextStyle(color: Color(0xFFFFFCE8)),
                                     hintText: "Enter your last name",
-                                    hintStyle: const TextStyle(
-                                      color: Color(0xFFFFFCE8),
-                                      fontFamily: 'Montserrat',
-                                    ),
+                                    hintStyle: const TextStyle(color: Color(0xFFFFFCE8)),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(15),
                                       borderSide: const BorderSide(color: Color(0xFFFFFCE8)),
@@ -148,29 +179,21 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                                       borderSide: const BorderSide(color: Color(0xFFFFFCE8), width: 2),
                                     ),
                                   ),
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFFCE8),
-                                    fontFamily: 'Montserrat',
-                                  ),
+                                  style: const TextStyle(color: Color(0xFFFFFCE8)),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 20),
 
-                          // 📧 SDCA Email
+                          // Email
                           TextField(
+                            controller: emailController,
                             decoration: InputDecoration(
                               labelText: "SDCA Email",
-                              labelStyle: const TextStyle(
-                                color: Color(0xFFFFFCE8),
-                                fontFamily: 'Montserrat',
-                              ),
+                              labelStyle: const TextStyle(color: Color(0xFFFFFCE8)),
                               hintText: "Enter your SDCA email",
-                              hintStyle: const TextStyle(
-                                color: Color(0xFFFFFCE8),
-                                fontFamily: 'Montserrat',
-                              ),
+                              hintStyle: const TextStyle(color: Color(0xFFFFFCE8)),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                                 borderSide: const BorderSide(color: Color(0xFFFFFCE8)),
@@ -180,27 +203,19 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                                 borderSide: const BorderSide(color: Color(0xFFFFFCE8), width: 2),
                               ),
                             ),
-                            style: const TextStyle(
-                              color: Color(0xFFFFFCE8),
-                              fontFamily: 'Montserrat',
-                            ),
+                            style: const TextStyle(color: Color(0xFFFFFCE8)),
                           ),
                           const SizedBox(height: 20),
 
-                          // 🔑 Create Password
+                          // Password
                           TextField(
+                            controller: passwordController,
                             obscureText: true,
                             decoration: InputDecoration(
                               labelText: "Create Password",
-                              labelStyle: const TextStyle(
-                                color: Color(0xFFFFFCE8),
-                                fontFamily: 'Montserrat',
-                              ),
+                              labelStyle: const TextStyle(color: Color(0xFFFFFCE8)),
                               hintText: "Create Password",
-                              hintStyle: const TextStyle(
-                                color: Color(0xFFFFFCE8),
-                                fontFamily: 'Montserrat',
-                              ),
+                              hintStyle: const TextStyle(color: Color(0xFFFFFCE8)),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                                 borderSide: const BorderSide(color: Color(0xFFFFFCE8)),
@@ -210,20 +225,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                                 borderSide: const BorderSide(color: Color(0xFFFFFCE8), width: 2),
                               ),
                               helperText: "must be at least 8 characters",
-                              helperStyle: const TextStyle(
-                                color: Color(0xFFFFFCE8),
-                                fontSize: 12,
-                                fontFamily: 'Montserrat',
-                              ),
+                              helperStyle: const TextStyle(color: Color(0xFFFFFCE8), fontSize: 12),
                             ),
-                            style: const TextStyle(
-                              color: Color(0xFFFFFCE8),
-                              fontFamily: 'Montserrat',
-                            ),
+                            style: const TextStyle(color: Color(0xFFFFFCE8)),
                           ),
                           const SizedBox(height: 10),
 
-                          // ✅ Terms & Privacy checkbox
+                          // Terms checkbox
                           Row(
                             children: [
                               Checkbox(
@@ -262,7 +270,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                           ),
                           const SizedBox(height: 25),
 
-                          // 🟦 Create Account button
+                          // Create Account button
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -274,9 +282,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                                 ),
                                 backgroundColor: const Color(0xFF0047AB),
                               ),
-                              onPressed: () {
-                                // TODO: Handle account creation
-                              },
+                              onPressed: _createAccount,
                               child: const Text(
                                 "Create Account",
                                 style: TextStyle(
@@ -290,16 +296,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                           ),
                           const SizedBox(height: 20),
 
-                          // 🔁 Already have an account? Login
+                          // Already have an account
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Text(
                                 "Already have an account? ",
-                                style: TextStyle(
-                                  color: Color(0xFFFFFCE8),
-                                  fontFamily: 'Montserrat',
-                                ),
+                                style: TextStyle(color: Color(0xFFFFFCE8)),
                               ),
                               GestureDetector(
                                 onTap: () {

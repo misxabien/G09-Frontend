@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'create_account.dart';
 import 'menu.dart';
 
+import 'services/api_service.dart';
+
+final TextEditingController emailController = TextEditingController();
+final TextEditingController passwordController = TextEditingController();
+
+
 class StudentLoginPage extends StatefulWidget {
   const StudentLoginPage({super.key});
 
@@ -174,12 +180,23 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                               ),
                               backgroundColor: const Color(0xFF0047AB),
                             ),
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const FoodHomePage()),
-                              );
-                            },
+                            onPressed: () async {
+                                var result = await ApiService.login(
+                                  emailController.text,
+                                  passwordController.text,
+                                  "student", 
+                                );
+                                if (result['success']) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const FoodHomePage()),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(result['message'] ?? 'Login failed')),
+                                  );
+                                }
+                              },
                             child: const Text(
                               "Log in",
                               style: TextStyle(

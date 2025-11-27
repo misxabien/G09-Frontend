@@ -5,21 +5,30 @@ class ApiService {
   // Replace this with your backend URL
   static const String baseUrl = 'http://localhost:5000';
 
-  /// LOGIN FUNCTION
-  static Future<Map<String, dynamic>> login(String email, String password) async {
-    final url = Uri.parse('$baseUrl/login');
-
+  /// LOGIN FUNCTION (for all roles: student, faculty, canteen)
+  static Future<Map<String, dynamic>> login(
+      String email, String password, String role) async {
     try {
       final response = await http.post(
-        url,
+        Uri.parse('$baseUrl/api/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'role': role,
+        }),
       );
 
       if (response.statusCode == 200) {
-        return {'success': true, 'data': jsonDecode(response.body)};
+        // Assuming your backend returns { success: true, data: {...} }
+        return jsonDecode(response.body);
       } else {
-        return {'success': false, 'message': jsonDecode(response.body)['message']};
+        // Backend sends error message
+        final res = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': res['message'] ?? 'Login failed',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -28,10 +37,8 @@ class ApiService {
 
   /// FETCH MENU ITEMS
   static Future<List<dynamic>> fetchMenu() async {
-    final url = Uri.parse('$baseUrl/menu');
-
     try {
-      final response = await http.get(url);
+      final response = await http.get(Uri.parse('$baseUrl/api/menu'));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -41,5 +48,18 @@ class ApiService {
     } catch (e) {
       return [];
     }
+  }
+
+  //create account
+  static Future<Map<String, dynamic>> createAccount(
+    String firstName,
+    String lastName,
+    String email,
+    String password,
+    String role,
+  ) async {
+    // TODO: replace with your actual API call
+    await Future.delayed(const Duration(seconds: 1));
+    return {'success': true}; // Mock response
   }
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'create_account.dart';
 import 'menu.dart';
+import 'services/api_service.dart';
+
+final TextEditingController emailController = TextEditingController();
+final TextEditingController passwordController = TextEditingController();
+
 
 class CanteenLoginPage extends StatefulWidget {
   const CanteenLoginPage ({super.key});
@@ -72,6 +77,7 @@ class _CanteenLoginPageState extends State<CanteenLoginPage> {
 
                         // ✉️ Email Field
                         TextField(
+                          controller: emailController, 
                           decoration: InputDecoration(
                             hintText: "Enter your SDCA email",
                             hintStyle: const TextStyle(
@@ -98,6 +104,7 @@ class _CanteenLoginPageState extends State<CanteenLoginPage> {
 
                         // 🔒 Password Field
                         TextField(
+                          controller: passwordController,
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: "Enter Password",
@@ -174,12 +181,23 @@ class _CanteenLoginPageState extends State<CanteenLoginPage> {
                               ),
                               backgroundColor: const Color(0xFF0047AB),
                             ),
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const FoodHomePage()),
-                              );
-                            },
+                            onPressed: () async {
+                                var result = await ApiService.login(
+                                  emailController.text,
+                                  passwordController.text,
+                                  "canteen", 
+                                );
+                                if (result['success']) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const FoodHomePage()),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(result['message'] ?? 'Login failed')),
+                                  );
+                                }
+                              },
                             child: const Text(
                               "Log in",
                               style: TextStyle(

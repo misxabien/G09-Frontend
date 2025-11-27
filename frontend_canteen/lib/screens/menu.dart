@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/api_service.dart';
 
 class FoodHomePage extends StatefulWidget {
   const FoodHomePage({super.key});
@@ -9,6 +10,22 @@ class FoodHomePage extends StatefulWidget {
 
 class _FoodUIExactState extends State<FoodHomePage> {
   String selectedMeal = "Breakfast";
+
+    List<dynamic> menuItems = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadMenu();
+  }
+
+  void loadMenu() async {
+    menuItems = await ApiService.fetchMenu();
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
