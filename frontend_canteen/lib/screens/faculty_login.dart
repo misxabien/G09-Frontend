@@ -21,11 +21,7 @@ class _FacultyLoginPageState extends State<FacultyLoginPage> {
   void loginFaculty() async {
     setState(() => isLoading = true);
 
-    final result = await ApiService.login(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-      "faculty",
-    );
+    final result = await ApiService.login(emailController.text.trim(), passwordController.text.trim(), "faculty");
 
     print("Faculty Login Response: $result");
 

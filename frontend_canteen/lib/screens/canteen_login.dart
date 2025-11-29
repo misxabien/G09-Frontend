@@ -21,11 +21,7 @@ class _CanteenLoginPageState extends State<CanteenLoginPage> {
   void loginCanteen() async {
     setState(() => isLoading = true);
 
-    final result = await ApiService.login(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-      "canteen",
-    );
+    final result = await ApiService.login(emailController.text.trim(), passwordController.text.trim(), "canteen");
 
     print("Canteen Login Response: $result");
 

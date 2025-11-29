@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'create_account.dart';
 import 'menu.dart';
 import 'services/api_service.dart';
@@ -18,39 +17,39 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
   bool keepLoggedIn = false;
   bool isLoading = false;
 
-  void loginStudent() async {
-    setState(() => isLoading = true);
+    void loginStudent() async {
+      setState(() => isLoading = true);
 
-    final result = await ApiService.login(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-      "student",
-    );
+      final result = await ApiService.login(
+        emailController.text.trim(),
+        passwordController.text.trim(),
+        "student",
+      );
 
-    print("Student Login Response: $result");
+      print("LOGIN RESULT: $result");
 
-    setState(() => isLoading = false);
+      setState(() => isLoading = false);
 
-    if (result['success'] == true && result['data']?['token'] != null) {
-      final token = result['data']['token'];
+      if (result == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login failed: No response from server")),);
+            return;
+          }
 
-      if (keepLoggedIn) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', token);
-        await prefs.setString('role', 'student');
+      if (result['status'] == "success") {
+        final token = result['token'];
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => FoodHomePage(token: token)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? "Login failed")),
+        );
       }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => FoodHomePage(token: token)),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Login failed')),
-      );
-    }
-  }
-
+}
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,17 +61,11 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
           decoration: BoxDecoration(
             color: const Color(0xFFF9F7E9),
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
           ),
           child: Row(
             children: [
-              // Left panel
+              // Left Panel
               Expanded(
                 flex: 1,
                 child: ClipRRect(
@@ -88,51 +81,22 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "Login",
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFFFFCE8),
-                          ),
-                        ),
+                        const Text("Login", style: TextStyle(fontFamily: 'Montserrat', fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFFFFCE8))),
                         const SizedBox(height: 10),
-                        const Text(
-                          "Ready to enjoy a smarter canteen experience?\nYour meal starts here.",
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 14,
-                            color: Color(0xFFFFFCE8),
-                            height: 1.5,
-                          ),
-                        ),
+                        const Text("Ready to enjoy a smarter canteen experience?\nYour meal starts here.", style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, color: Color(0xFFFFFCE8), height: 1.5)),
                         const SizedBox(height: 40),
-
+                        
                         // Email
                         TextField(
                           controller: emailController,
                           decoration: InputDecoration(
-                            hintText: "Enter your email",
-                            hintStyle: const TextStyle(
-                              color: Color(0xFFFFFCE8),
-                              fontFamily: 'Montserrat',
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(color: Color(0xFFFFFCE8)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(color: Color(0xFFFFFCE8), width: 2),
-                            ),
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            hintText: "Enter your SDCA email",
+                            hintStyle: const TextStyle(color: Color(0xFFFFFCE8), fontFamily: 'Montserrat'),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFFFFFCE8))),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFFFFFCE8), width: 2)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           ),
-                          style: const TextStyle(
-                            color: Color(0xFFFFFCE8),
-                            fontFamily: 'Montserrat',
-                          ),
+                          style: const TextStyle(color: Color(0xFFFFFCE8), fontFamily: 'Montserrat'),
                         ),
                         const SizedBox(height: 20),
 
@@ -142,29 +106,16 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: "Enter Password",
-                            hintStyle: const TextStyle(
-                              color: Color(0xFFFFFCE8),
-                              fontFamily: 'Montserrat',
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(color: Color(0xFFFFFCE8)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(color: Color(0xFFFFFCE8), width: 2),
-                            ),
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            hintStyle: const TextStyle(color: Color(0xFFFFFCE8), fontFamily: 'Montserrat'),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFFFFFCE8))),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFFFFFCE8), width: 2)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           ),
-                          style: const TextStyle(
-                            color: Color(0xFFFFFCE8),
-                            fontFamily: 'Montserrat',
-                          ),
+                          style: const TextStyle(color: Color(0xFFFFFCE8), fontFamily: 'Montserrat'),
                         ),
                         const SizedBox(height: 10),
 
-                        // Checkbox + Forgot Password
+                        // Checkbox + Forgot
                         Row(
                           children: [
                             Checkbox(
@@ -172,32 +123,13 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                               activeColor: const Color(0xFFFFFCE8),
                               checkColor: const Color(0xFF0047AB),
                               side: const BorderSide(color: Color(0xFFFFFCE8)),
-                              onChanged: (value) {
-                                setState(() {
-                                  keepLoggedIn = value ?? false;
-                                });
-                              },
+                              onChanged: (value) => setState(() => keepLoggedIn = value ?? false),
                             ),
-                            const Text(
-                              "Keep me logged in",
-                              style: TextStyle(
-                                color: Color(0xFFFFFCE8),
-                                fontFamily: 'Montserrat',
-                                fontSize: 13,
-                              ),
-                            ),
+                            const Text("Keep me logged in", style: TextStyle(color: Color(0xFFFFFCE8), fontFamily: 'Montserrat', fontSize: 13)),
                             const Spacer(),
                             GestureDetector(
                               onTap: () {},
-                              child: const Text(
-                                "Forgot Password?",
-                                style: TextStyle(
-                                  color: Color(0xFFFFFCE8),
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 13,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
+                              child: const Text("Forgot Password?", style: TextStyle(color: Color(0xFFFFFCE8), fontFamily: 'Montserrat', fontSize: 13, decoration: TextDecoration.underline)),
                             ),
                           ],
                         ),
@@ -210,56 +142,30 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Color(0xFFFFFCE8), width: 2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                               backgroundColor: const Color(0xFF0047AB),
                             ),
                             onPressed: isLoading ? null : loginStudent,
                             child: isLoading
                                 ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text(
-                                    "Log in",
+                                : const Text("Log in",
                                     style: TextStyle(
                                       color: Color(0xFFFFFCE8),
                                       fontFamily: 'Montserrat',
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                    ),
-                                  ),
+                                    )),
                           ),
                         ),
-                        const SizedBox(height: 20),
 
                         // Sign up link
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              "Don’t have an account? ",
-                              style: TextStyle(
-                                color: Color(0xFFFFFCE8),
-                                fontFamily: 'Montserrat',
-                              ),
-                            ),
+                            const Text("Don’t have an account? ", style: TextStyle(color: Color(0xFFFFFCE8), fontFamily: 'Montserrat')),
                             GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const CreateAccountPage(),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                "Sign up",
-                                style: TextStyle(
-                                  color: Color(0xFFFFFCE8),
-                                  fontFamily: 'Montserrat',
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateAccountPage())),
+                              child: const Text("Sign up", style: TextStyle(color: Color(0xFFFFFCE8), fontFamily: 'Montserrat', fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
                             ),
                           ],
                         ),
@@ -269,27 +175,15 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                 ),
               ),
 
-              // Right image/logo
+              // Right Image
               Expanded(
                 flex: 1,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      "Welcome Back!",
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0047AB),
-                      ),
-                    ),
+                    const Text("Welcome Back!", style: TextStyle(fontFamily: 'Montserrat', fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0047AB))),
                     const SizedBox(height: 30),
-                    Image.asset(
-                      'assets/images/sdc.png',
-                      width: 230,
-                      height: 230,
-                    ),
+                    Image.asset('assets/images/sdc.png', width: 230, height: 230),
                   ],
                 ),
               ),

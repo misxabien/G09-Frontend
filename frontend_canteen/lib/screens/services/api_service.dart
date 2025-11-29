@@ -2,68 +2,57 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // Replace this with your backend URL
+  // Backend URL
   static const String baseUrl = 'http://localhost:5000';
 
-  /// LOGIN FUNCTION (for all roles: student, faculty, canteen)
+  // LOGIN FUNCTION
   static Future<Map<String, dynamic>> login(
-    String email, String password, String role) async {
-  try {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-        'role': role,
-      }),
-    );
+      String email, String password, String role) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'userType': role, // updated to match backend
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      // Parse the backend response
       final res = jsonDecode(response.body);
 
-      // Optional: attach role to response
       if (res['success'] == true && res['data']?['token'] != null) {
-        res['role'] = role;  
+        res['role'] = role; // add role for Flutter usage
       }
 
       return res;
-    } else {
-      final res = jsonDecode(response.body);
-      return {
-        'success': false,
-        'message': res['message'] ?? 'Login failed',
-      };
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
-  } catch (e) {
-    return {'success': false, 'message': e.toString()};
   }
-}
 
-
-  /// FETCH MENU ITEMS
+  // FETCH MENU ITEMS
   static Future<List<dynamic>> fetchMenu({String? token}) async {
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/menu'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/menu'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return [];
+      }
+    } catch (e) {
       return [];
     }
-  } catch (e) {
-    return [];
   }
-}
 
-  //create account
+  // CREATE ACCOUNT
   static Future<Map<String, dynamic>> createAccount(
     String firstName,
     String lastName,
