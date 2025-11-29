@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'create_account.dart';
 import 'menu.dart';
-
 import 'services/api_service.dart';
 
 final TextEditingController emailController = TextEditingController();
 final TextEditingController passwordController = TextEditingController();
-
 
 class StudentLoginPage extends StatefulWidget {
   const StudentLoginPage({super.key});
@@ -17,6 +16,40 @@ class StudentLoginPage extends StatefulWidget {
 
 class _StudentLoginPageState extends State<StudentLoginPage> {
   bool keepLoggedIn = false;
+  bool isLoading = false;
+
+  void loginStudent() async {
+    setState(() => isLoading = true);
+
+    final result = await ApiService.login(
+      emailController.text.trim(),
+      passwordController.text.trim(),
+      "student",
+    );
+
+    print("Student Login Response: $result");
+
+    setState(() => isLoading = false);
+
+    if (result['success'] == true && result['data']?['token'] != null) {
+      final token = result['data']['token'];
+
+      if (keepLoggedIn) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt_token', token);
+        await prefs.setString('role', 'student');
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => FoodHomePage(token: token)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Login failed')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,14 +72,14 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
           ),
           child: Row(
             children: [
-              // 🔹 Left Blue Panel
+              // Left panel
               Expanded(
                 flex: 1,
                 child: ClipRRect(
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     bottomLeft: Radius.circular(20),
-                    topRight: Radius.circular(80), // Rounded curve on right side
+                    topRight: Radius.circular(80),
                     bottomRight: Radius.circular(80),
                   ),
                   child: Container(
@@ -76,10 +109,11 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                         ),
                         const SizedBox(height: 40),
 
-                        // ✉️ Email Field
+                        // Email
                         TextField(
+                          controller: emailController,
                           decoration: InputDecoration(
-                            hintText: "Enter your SDCA email",
+                            hintText: "Enter your email",
                             hintStyle: const TextStyle(
                               color: Color(0xFFFFFCE8),
                               fontFamily: 'Montserrat',
@@ -102,8 +136,9 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                         ),
                         const SizedBox(height: 20),
 
-                        // 🔒 Password Field
+                        // Password
                         TextField(
+                          controller: passwordController,
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: "Enter Password",
@@ -129,7 +164,7 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                         ),
                         const SizedBox(height: 10),
 
-                        // ✅ Checkbox + Forgot Password
+                        // Checkbox + Forgot Password
                         Row(
                           children: [
                             Checkbox(
@@ -168,7 +203,7 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                         ),
                         const SizedBox(height: 30),
 
-                        // 🔘 Login Button
+                        // Login Button
                         SizedBox(
                           width: double.infinity,
                           height: 50,
@@ -180,37 +215,23 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                               ),
                               backgroundColor: const Color(0xFF0047AB),
                             ),
-                            onPressed: () async {
-                                var result = await ApiService.login(
-                                  emailController.text,
-                                  passwordController.text,
-                                  "student", 
-                                );
-                                if (result['success']) {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const FoodHomePage()),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(result['message'] ?? 'Login failed')),
-                                  );
-                                }
-                              },
-                            child: const Text(
-                              "Log in",
-                              style: TextStyle(
-                                color: Color(0xFFFFFCE8),
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
+                            onPressed: isLoading ? null : loginStudent,
+                            child: isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text(
+                                    "Log in",
+                                    style: TextStyle(
+                                      color: Color(0xFFFFFCE8),
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        // 👤 Sign up link
+                        // Sign up link
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -248,7 +269,7 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                 ),
               ),
 
-              // 🍽️ Right Image/Logo Section
+              // Right image/logo
               Expanded(
                 flex: 1,
                 child: Column(

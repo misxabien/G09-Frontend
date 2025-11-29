@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
 
 class FoodHomePage extends StatefulWidget {
-  const FoodHomePage({super.key});
+  final String token; // <-- add this
+  const FoodHomePage({super.key, required this.token});
 
   @override
   State<FoodHomePage> createState() => _FoodUIExactState();
@@ -10,18 +12,38 @@ class FoodHomePage extends StatefulWidget {
 
 class _FoodUIExactState extends State<FoodHomePage> {
   String selectedMeal = "Breakfast";
-
-    List<dynamic> menuItems = [];
+  List<dynamic> menuItems = [];
   bool isLoading = true;
+  String? token;
 
   @override
   void initState() {
     super.initState();
-    loadMenu();
+    _loadTokenAndMenu();
   }
 
-  void loadMenu() async {
-    menuItems = await ApiService.fetchMenu();
+  // Load JWT token and then fetch menu
+  void _loadTokenAndMenu() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('jwt_token');
+
+    if (token != null) {
+      await loadMenu();
+    } else {
+      // No token → maybe redirect to login
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // Fetch menu from API using token
+  Future<void> loadMenu() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    menuItems = await ApiService.fetchMenu(token: token);
     setState(() {
       isLoading = false;
     });
@@ -31,183 +53,147 @@ class _FoodUIExactState extends State<FoodHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCE8),
-      body: Row(
-        children: [
-          // --------------------------------------------------------------
-          // SIDEBAR (Exact width, spacing, icons, divider line)
-          // --------------------------------------------------------------
-          Container(
-            width: 90,
-            color: const Color(0xFF0A57A3),
-            child: Column(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Row(
               children: [
-                const SizedBox(height: 30),
-
-                // Top circular logo
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.restaurant_menu,
-                      color: Color(0xFF0A57A3), size: 32),
-                ),
-
-                const SizedBox(height: 40),
-                _sidebarIcon(Icons.home),
-                const SizedBox(height: 35),
-                _sidebarIcon(Icons.person),
-                const SizedBox(height: 35),
-                _sidebarIcon(Icons.shopping_cart),
-
-                // Divider line
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Divider(color: Colors.white, thickness: 1),
-                ),
-
-                _sidebarIcon(Icons.history),
-                const SizedBox(height: 45),
-
-                const Spacer(),
-
-                _sidebarIcon(Icons.menu),
-                const SizedBox(height: 25),
-              ],
-            ),
-          ),
-
-          // --------------------------------------------------------------
-          // RIGHT SIDE CONTENT
-          // --------------------------------------------------------------
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(40, 30, 40, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ------------------------------------------------------
-                  // HEADER
-                  // ------------------------------------------------------
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Sidebar (unchanged)
+                Container(
+                  width: 90,
+                  color: const Color(0xFF0A57A3),
+                  child: Column(
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Welcome!",
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            "Let’s Order Your Food",
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0A57A3),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 30),
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.restaurant_menu,
+                            color: Color(0xFF0A57A3), size: 32),
                       ),
+                      const SizedBox(height: 40),
+                      _sidebarIcon(Icons.home),
+                      const SizedBox(height: 35),
+                      _sidebarIcon(Icons.person),
+                      const SizedBox(height: 35),
+                      _sidebarIcon(Icons.shopping_cart),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Divider(color: Colors.white, thickness: 1),
+                      ),
+                      _sidebarIcon(Icons.history),
+                      const SizedBox(height: 45),
+                      const Spacer(),
+                      _sidebarIcon(Icons.menu),
+                      const SizedBox(height: 25),
+                    ],
+                  ),
+                ),
 
-                      // Search bar aligned to the right
-                      SizedBox(
-                        width: 330,
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: "Search",
-                            prefixIcon: Icon(Icons.search),
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(40),
+                // Main content
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(40, 30, 40, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Welcome!",
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  "Let’s Order Your Food",
+                                  style: TextStyle(
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0A57A3),
+                                  ),
+                                ),
+                              ],
                             ),
+                            SizedBox(
+                              width: 330,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: "Search",
+                                  prefixIcon: Icon(Icons.search),
+                                  contentPadding:
+                                      EdgeInsets.symmetric(vertical: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(40),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 35),
+
+                        // Meal Tabs
+                        Row(
+                          children: [
+                            _mealTab("Breakfast"),
+                            const SizedBox(width: 15),
+                            _mealTab("Lunch"),
+                          ],
+                        ),
+                        const SizedBox(height: 35),
+
+                        // Menu Grid
+                        const Text(
+                          "Menu",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0A57A3),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 25),
 
-                  const SizedBox(height: 35),
-
-                  // ------------------------------------------------------
-                  // RICE MEALS LABEL
-                  // ------------------------------------------------------
-                  const Text(
-                    "Rice Meals",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0A57A3),
-                    ),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  // ------------------------------------------------------
-                  // BREAKFAST / LUNCH TABS
-                  // ------------------------------------------------------
-                  Row(
-                    children: [
-                      _mealTab("Breakfast"),
-                      const SizedBox(width: 15),
-                      _mealTab("Lunch"),
-                    ],
-                  ),
-
-                  const SizedBox(height: 35),
-
-                  // ------------------------------------------------------
-                  // MENU LABEL
-                  // ------------------------------------------------------
-                  const Text(
-                    "Menu",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0A57A3),
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // ------------------------------------------------------
-                  // FOOD CARDS GRID (Exact width & height like design)
-                  // ------------------------------------------------------
-                  Expanded(
-                    child: GridView.count(
-                      crossAxisCount: 4,
-                      crossAxisSpacing: 20,
-                      mainAxisSpacing: 20,
-                      childAspectRatio: 0.72, // controls card shape
-                      children: [
-                        _foodCard("assets/cornbeef.png", "CORN BEEF", "100.00 PHP"),
-                        _foodCard("assets/hotdog.png", "HOTDOG", "85.00 PHP"),
-                        _foodCard("assets/longganisa.png", "LONGGANISA", "85.00 PHP"),
-                        _foodCard("assets/egg.png", "SCRAMBLE EGG", "20.00 PHP"),
+                        Expanded(
+                          child: GridView.builder(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 20,
+                              mainAxisSpacing: 20,
+                              childAspectRatio: 0.72,
+                            ),
+                            itemCount: menuItems.length,
+                            itemBuilder: (context, index) {
+                              final item = menuItems[index];
+                              return _foodCard(
+                                item['image'] ?? 'assets/cornbeef.png',
+                                item['name'] ?? 'Food',
+                                "${item['price'] ?? '0.00'} PHP",
+                              );
+                            },
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
-  // ------------------------------------------------------------------
-  // SIDEBAR ICON
-  // ------------------------------------------------------------------
+  // Sidebar icon
   Widget _sidebarIcon(IconData icon) {
     return Icon(icon, color: Colors.white, size: 30);
   }
 
-  // ------------------------------------------------------------------
-  // MEAL TAB BUTTON (Breakfast/Lunch)
-  // ------------------------------------------------------------------
+  // Meal tab
   Widget _mealTab(String text) {
     bool active = selectedMeal == text;
-
     return GestureDetector(
       onTap: () => setState(() => selectedMeal = text),
       child: Container(
@@ -229,9 +215,7 @@ class _FoodUIExactState extends State<FoodHomePage> {
     );
   }
 
-  // ------------------------------------------------------------------
-  // FOOD CARD
-  // ------------------------------------------------------------------
+  // Food card
   Widget _foodCard(String image, String title, String price) {
     return Container(
       decoration: BoxDecoration(
@@ -241,7 +225,6 @@ class _FoodUIExactState extends State<FoodHomePage> {
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
       child: Column(
         children: [
-          // Circular image
           ClipRRect(
             borderRadius: BorderRadius.circular(100),
             child: Image.asset(
@@ -251,9 +234,7 @@ class _FoodUIExactState extends State<FoodHomePage> {
               fit: BoxFit.cover,
             ),
           ),
-
           const SizedBox(height: 12),
-
           Text(
             title,
             style: const TextStyle(
@@ -263,10 +244,7 @@ class _FoodUIExactState extends State<FoodHomePage> {
               height: 1,
             ),
           ),
-
           const SizedBox(height: 6),
-
-          // Rating stars
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -277,10 +255,7 @@ class _FoodUIExactState extends State<FoodHomePage> {
               Icon(Icons.star, color: Colors.yellow, size: 18),
             ],
           ),
-
           const SizedBox(height: 8),
-
-          // Price
           Text(
             price,
             style: const TextStyle(
@@ -289,9 +264,7 @@ class _FoodUIExactState extends State<FoodHomePage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 5),
-
           const Text(
             "1 cup of rice and side dish",
             style: TextStyle(

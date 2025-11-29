@@ -7,48 +7,61 @@ class ApiService {
 
   /// LOGIN FUNCTION (for all roles: student, faculty, canteen)
   static Future<Map<String, dynamic>> login(
-      String email, String password, String role) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-          'role': role,
-        }),
-      );
+    String email, String password, String role) async {
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+        'role': role,
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        // Assuming your backend returns { success: true, data: {...} }
-        return jsonDecode(response.body);
-      } else {
-        // Backend sends error message
-        final res = jsonDecode(response.body);
-        return {
-          'success': false,
-          'message': res['message'] ?? 'Login failed',
-        };
+    if (response.statusCode == 200) {
+      // Parse the backend response
+      final res = jsonDecode(response.body);
+
+      // Optional: attach role to response
+      if (res['success'] == true && res['data']?['token'] != null) {
+        res['role'] = role;  
       }
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
+
+      return res;
+    } else {
+      final res = jsonDecode(response.body);
+      return {
+        'success': false,
+        'message': res['message'] ?? 'Login failed',
+      };
     }
+  } catch (e) {
+    return {'success': false, 'message': e.toString()};
   }
+}
+
 
   /// FETCH MENU ITEMS
-  static Future<List<dynamic>> fetchMenu() async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/api/menu'));
+  static Future<List<dynamic>> fetchMenu({String? token}) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/menu'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        return [];
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
       return [];
     }
+  } catch (e) {
+    return [];
   }
+}
 
   //create account
   static Future<Map<String, dynamic>> createAccount(
