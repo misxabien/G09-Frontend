@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
+import 'profile_page.dart';
 
 class FoodHomePage extends StatefulWidget {
-  final String token; // <-- add this
-  const FoodHomePage({super.key, required this.token});
+  final String token;
+  final Map<String, dynamic>? userData;
+  const FoodHomePage({super.key, required this.token, this.userData});
 
   @override
   State<FoodHomePage> createState() => _FoodUIExactState();
 }
 
 class _FoodUIExactState extends State<FoodHomePage> {
-  String selectedMeal = "Breakfast";
+  String selectedCategory = "All";
   List<dynamic> menuItems = [];
+  List<dynamic> filteredMenuItems = [];
   bool isLoading = true;
   String? token;
+  final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadTokenAndMenu();
+    token = widget.token; // Use the token passed from login
+    loadMenu(); // Load menu immediately
   }
 
   // Load JWT token and then fetch menu
@@ -43,10 +48,32 @@ class _FoodUIExactState extends State<FoodHomePage> {
       isLoading = true;
     });
 
+    print('🔄 Fetching menu from API...');
     menuItems = await ApiService.fetchMenu(token: token);
+    print('✅ Received ${menuItems.length} menu items');
+    print('📦 First item: ${menuItems.isNotEmpty ? menuItems[0] : "EMPTY"}');
+    
     setState(() {
       isLoading = false;
+      _applyFilters();
     });
+  }
+
+  // Filter menu items based on category and search query
+  void _applyFilters() {
+    String query = searchController.text.toLowerCase();
+    
+    filteredMenuItems = menuItems.where((item) {
+      // Category filter
+      bool matchesCategory = selectedCategory == "All" || 
+          item['category'].toString().toLowerCase() == selectedCategory.toLowerCase();
+      
+      // Search filter
+      bool matchesSearch = query.isEmpty || 
+          item['name'].toString().toLowerCase().contains(query);
+      
+      return matchesCategory && matchesSearch;
+    }).toList();
   }
 
   @override
@@ -73,7 +100,17 @@ class _FoodUIExactState extends State<FoodHomePage> {
                       const SizedBox(height: 40),
                       _sidebarIcon(Icons.home),
                       const SizedBox(height: 35),
-                      _sidebarIcon(Icons.person),
+                      _sidebarIconButton(Icons.person, () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfilePage(
+                              token: token!,
+                              userData: widget.userData,
+                            ),
+                          ),
+                        );
+                      }),
                       const SizedBox(height: 35),
                       _sidebarIcon(Icons.shopping_cart),
                       const Padding(
@@ -100,34 +137,45 @@ class _FoodUIExactState extends State<FoodHomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Welcome!",
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  "Let’s Order Your Food",
-                                  style: TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0A57A3),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Welcome!",
+                                    style: TextStyle(fontSize: 18),
                                   ),
-                                ),
-                              ],
+                                  SizedBox(height: 4),
+                                  Text(
+                                    "Let's Order Your Food",
+                                    style: TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0A57A3),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            SizedBox(
-                              width: 330,
+                            const SizedBox(width: 10),
+                            Expanded(
                               child: TextField(
+                                controller: searchController,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _applyFilters();
+                                  });
+                                },
                                 decoration: InputDecoration(
                                   hintText: "Search",
                                   prefixIcon: Icon(Icons.search),
                                   contentPadding:
                                       EdgeInsets.symmetric(vertical: 12),
+                                  filled: true,
+                                  fillColor: Colors.white,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(40),
+                                    borderSide: BorderSide.none,
                                   ),
                                 ),
                               ),
@@ -136,13 +184,22 @@ class _FoodUIExactState extends State<FoodHomePage> {
                         ),
                         const SizedBox(height: 35),
 
-                        // Meal Tabs
-                        Row(
-                          children: [
-                            _mealTab("Breakfast"),
-                            const SizedBox(width: 15),
-                            _mealTab("Lunch"),
-                          ],
+                        // Category Tabs
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _categoryTab("All"),
+                              const SizedBox(width: 10),
+                              _categoryTab("Main"),
+                              const SizedBox(width: 10),
+                              _categoryTab("Beverage"),
+                              const SizedBox(width: 10),
+                              _categoryTab("Snack"),
+                              const SizedBox(width: 10),
+                              _categoryTab("Dessert"),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 35),
 
@@ -161,18 +218,18 @@ class _FoodUIExactState extends State<FoodHomePage> {
                           child: GridView.builder(
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4,
-                              crossAxisSpacing: 20,
-                              mainAxisSpacing: 20,
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 15,
+                              mainAxisSpacing: 15,
                               childAspectRatio: 0.72,
                             ),
-                            itemCount: menuItems.length,
+                            itemCount: filteredMenuItems.length,
                             itemBuilder: (context, index) {
-                              final item = menuItems[index];
+                              final item = filteredMenuItems[index];
                               return _foodCard(
-                                item['image'] ?? 'assets/cornbeef.png',
+                                item['imageUrl'] ?? '',
                                 item['name'] ?? 'Food',
-                                "${item['price'] ?? '0.00'} PHP",
+                                "₱${item['price'] ?? '0.00'}",
                               );
                             },
                           ),
@@ -191,15 +248,30 @@ class _FoodUIExactState extends State<FoodHomePage> {
     return Icon(icon, color: Colors.white, size: 30);
   }
 
-  // Meal tab
-  Widget _mealTab(String text) {
-    bool active = selectedMeal == text;
+  // Sidebar icon button (clickable)
+  Widget _sidebarIconButton(IconData icon, VoidCallback onTap) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, color: Colors.white, size: 30),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+    );
+  }
+
+  // Category tab
+  Widget _categoryTab(String text) {
+    bool active = selectedCategory == text;
     return GestureDetector(
-      onTap: () => setState(() => selectedMeal = text),
+      onTap: () {
+        setState(() {
+          selectedCategory = text;
+          _applyFilters();
+        });
+      },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF0A57A3) : Colors.transparent,
+          color: active ? const Color(0xFF0A57A3) : Colors.white,
           borderRadius: BorderRadius.circular(30),
           border: Border.all(color: const Color(0xFF0A57A3), width: 2),
         ),
@@ -207,7 +279,7 @@ class _FoodUIExactState extends State<FoodHomePage> {
           text,
           style: TextStyle(
             color: active ? Colors.white : const Color(0xFF0A57A3),
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -227,12 +299,27 @@ class _FoodUIExactState extends State<FoodHomePage> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(100),
-            child: Image.asset(
-              image,
-              height: 120,
-              width: 120,
-              fit: BoxFit.cover,
-            ),
+            child: image.startsWith('http')
+                ? Image.network(
+                    image,
+                    height: 120,
+                    width: 120,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 120,
+                        width: 120,
+                        color: Colors.grey,
+                        child: const Icon(Icons.fastfood, color: Colors.white, size: 50),
+                      );
+                    },
+                  )
+                : Image.asset(
+                    image,
+                    height: 120,
+                    width: 120,
+                    fit: BoxFit.cover,
+                  ),
           ),
           const SizedBox(height: 12),
           Text(

@@ -38,10 +38,16 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
 
       if (result['status'] == "success") {
         final token = result['token'];
+        final userData = result['data']?['user'];
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => FoodHomePage(token: token)),
+          MaterialPageRoute(
+            builder: (_) => FoodHomePage(
+              token: token,
+              userData: userData,
+            ),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

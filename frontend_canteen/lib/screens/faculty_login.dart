@@ -27,8 +27,8 @@ class _FacultyLoginPageState extends State<FacultyLoginPage> {
 
     setState(() => isLoading = false);
 
-    if (result['success'] == true && result['data']?['token'] != null) {
-      final token = result['data']['token'];
+    if (result['status'] == 'success' && result['token'] != null) {
+      final token = result['token'];
 
       if (keepLoggedIn) {
         final prefs = await SharedPreferences.getInstance();
