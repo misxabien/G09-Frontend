@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'create_account.dart';
 import 'menu.dart';
 import 'services/api_service.dart';
+import 'staff_dashboard.dart';
 
 final TextEditingController emailController = TextEditingController();
 final TextEditingController passwordController = TextEditingController();
@@ -21,24 +22,30 @@ class _CanteenLoginPageState extends State<CanteenLoginPage> {
   void loginCanteen() async {
     setState(() => isLoading = true);
 
-    final result = await ApiService.login(emailController.text.trim(), passwordController.text.trim(), "canteen");
+    final result = await ApiService.login(emailController.text.trim(), passwordController.text.trim(), "canteen_staff");
 
     print("Canteen Login Response: $result");
 
     setState(() => isLoading = false);
 
-    if (result['success'] == true && result['data']?['token'] != null) {
-      final token = result['data']['token'];
+    if (result['status'] == 'success' && result['token'] != null) {
+      final token = result['token'];
+      final userData = result['data']?['user'];
 
       if (keepLoggedIn) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwt_token', token);
-        await prefs.setString('role', 'canteen');
+        await prefs.setString('role', 'canteen_staff');
       }
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => FoodHomePage(token: token)),
+        MaterialPageRoute(
+          builder: (context) => StaffDashboard(
+            token: token,
+            userData: userData,
+          ),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
