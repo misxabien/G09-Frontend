@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'services/api_service.dart';
 import 'profile_page.dart';
+import 'widgets/chatbot_widget.dart';
+import 'my_orders_page.dart';
+import 'widgets/sidebar_widget.dart';
+import '../providers/cart_provider.dart';
 
 class FoodHomePage extends StatefulWidget {
   final String token;
@@ -82,49 +87,17 @@ class _FoodUIExactState extends State<FoodHomePage> {
       backgroundColor: const Color(0xFFFFFCE8),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Row(
+          : Stack(
               children: [
-                // Sidebar (unchanged)
-                Container(
-                  width: 90,
-                  color: const Color(0xFF0A57A3),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 30),
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.restaurant_menu,
-                            color: Color(0xFF0A57A3), size: 32),
-                      ),
-                      const SizedBox(height: 40),
-                      _sidebarIcon(Icons.home),
-                      const SizedBox(height: 35),
-                      _sidebarIconButton(Icons.person, () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProfilePage(
-                              token: token!,
-                              userData: widget.userData,
-                            ),
-                          ),
-                        );
-                      }),
-                      const SizedBox(height: 35),
-                      _sidebarIcon(Icons.shopping_cart),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child: Divider(color: Colors.white, thickness: 1),
-                      ),
-                      _sidebarIcon(Icons.history),
-                      const SizedBox(height: 45),
-                      const Spacer(),
-                      _sidebarIcon(Icons.menu),
-                      const SizedBox(height: 25),
-                    ],
-                  ),
+                Row(
+              children: [
+                // Sidebar Widget
+                SidebarWidget(
+                  token: token,
+                  userData: widget.userData,
+                  currentPage: 'menu',
                 ),
+
 
                 // Main content
                 Expanded(
@@ -226,11 +199,7 @@ class _FoodUIExactState extends State<FoodHomePage> {
                             itemCount: filteredMenuItems.length,
                             itemBuilder: (context, index) {
                               final item = filteredMenuItems[index];
-                              return _foodCard(
-                                item['imageUrl'] ?? '',
-                                item['name'] ?? 'Food',
-                                "₱${item['price'] ?? '0.00'}",
-                              );
+                              return _foodCard(item);
                             },
                           ),
                         ),
@@ -240,21 +209,10 @@ class _FoodUIExactState extends State<FoodHomePage> {
                 ),
               ],
             ),
-    );
-  }
-
-  // Sidebar icon
-  Widget _sidebarIcon(IconData icon) {
-    return Icon(icon, color: Colors.white, size: 30);
-  }
-
-  // Sidebar icon button (clickable)
-  Widget _sidebarIconButton(IconData icon, VoidCallback onTap) {
-    return IconButton(
-      onPressed: onTap,
-      icon: Icon(icon, color: Colors.white, size: 30),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
+                // Chatbot Widget
+                ChatBotWidget(token: token!),
+              ],
+            ),
     );
   }
 
@@ -288,7 +246,14 @@ class _FoodUIExactState extends State<FoodHomePage> {
   }
 
   // Food card
-  Widget _foodCard(String image, String title, String price) {
+  Widget _foodCard(Map<String, dynamic> item) {
+    final String image = item['imageUrl'] ?? '';
+    final String title = item['name'] ?? 'Food';
+    final double price = (item['price'] is int) 
+        ? (item['price'] as int).toDouble() 
+        : (item['price'] ?? 0.0);
+    final String id = item['_id'] ?? '';
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0A57A3),
@@ -330,6 +295,9 @@ class _FoodUIExactState extends State<FoodHomePage> {
               fontSize: 15,
               height: 1,
             ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
           const Row(
@@ -343,13 +311,45 @@ class _FoodUIExactState extends State<FoodHomePage> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            price,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "₱${price.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.add, color: Color(0xFF0A57A3), size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                  onPressed: () {
+                    Provider.of<CartProvider>(context, listen: false).addItem(
+                      id,
+                      title,
+                      price,
+                      image,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('$title added to cart'),
+                        duration: const Duration(seconds: 1),
+                        backgroundColor: const Color(0xFF0A57A3),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 5),
           const Text(
@@ -358,6 +358,7 @@ class _FoodUIExactState extends State<FoodHomePage> {
               color: Colors.white,
               fontSize: 11,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

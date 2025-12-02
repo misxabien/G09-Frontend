@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'loginselection_screen.dart';
 import 'staff_dashboard.dart';
 import 'menu.dart';
+import 'widgets/sidebar_widget.dart';
 
 class ProfilePage extends StatelessWidget {
   final String token;
@@ -36,106 +37,11 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: const Color(0xFFFFFCE8),
       body: Row(
         children: [
-          // Sidebar - matches the dashboard exactly
-          Container(
-            width: 90,
-            color: const Color(0xFF0A57A3),
-            child: Column(
-              children: [
-                const SizedBox(height: 30),
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.restaurant_menu,
-                      color: Color(0xFF0A57A3), size: 32),
-                ),
-                const SizedBox(height: 40),
-                
-                if (isStaff) ...[
-                  // Orders icon
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => StaffDashboard(
-                            token: token,
-                            userData: userData,
-                            initialTab: 0,
-                          ),
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.receipt_long, color: Colors.white, size: 30),
-                  ),
-                  const SizedBox(height: 35),
-                  // Menu Management icon  
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => StaffDashboard(
-                            token: token,
-                            userData: userData,
-                            initialTab: 1,
-                          ),
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.fastfood, color: Colors.white, size: 30),
-                  ),
-                  const SizedBox(height: 35),
-                  // Profile icon (current page - highlighted)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: null,
-                      icon: Icon(Icons.person, color: Colors.white, size: 30),
-                      disabledColor: Colors.white,
-                    ),
-                  ),
-                ] else ...[
-                  // Home icon
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.home, color: Colors.white, size: 30),
-                  ),
-                  const SizedBox(height: 35),
-                  // Profile icon (current page - highlighted)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: null,
-                      icon: Icon(Icons.person, color: Colors.white, size: 30),
-                    ),
-                  ),
-                  const SizedBox(height: 35),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.shopping_cart, color: Colors.white, size: 30),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Divider(color: Colors.white, thickness: 1),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.history, color: Colors.white, size: 30),
-                  ),
-                ],
-                
-                const Spacer(),
-                Icon(isStaff ? Icons.settings : Icons.menu, color: Colors.white, size: 30),
-                const SizedBox(height: 25),
-              ],
-            ),
+          // Sidebar Widget
+          SidebarWidget(
+            token: token,
+            userData: userData,
+            currentPage: 'profile',
           ),
 
           // Main Content
