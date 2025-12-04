@@ -31,6 +31,18 @@ class _CanteenLoginPageState extends State<CanteenLoginPage> {
     if (result['status'] == 'success' && result['token'] != null) {
       final token = result['token'];
       final userData = result['data']?['user'];
+      final actualRole = userData?['userType']?.toString().toLowerCase();
+
+      // VALIDATE: Ensure user is actually canteen staff
+      if (actualRole != 'canteen_staff') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('This account is for ${actualRole ?? "another role"}. Please use the ${actualRole ?? "correct"} login page.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;  // Don't navigate
+      }
 
       if (keepLoggedIn) {
         final prefs = await SharedPreferences.getInstance();

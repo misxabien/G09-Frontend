@@ -29,6 +29,19 @@ class _FacultyLoginPageState extends State<FacultyLoginPage> {
 
     if (result['status'] == 'success' && result['token'] != null) {
       final token = result['token'];
+      final userData = result['data']?['user'];  // Extract userData
+      final actualRole = userData?['userType']?.toString().toLowerCase();
+
+      // VALIDATE: Ensure user is actually faculty
+      if (actualRole != 'faculty') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('This account is for ${actualRole ?? "another role"}. Please use the ${actualRole ?? "correct"} login page.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;  // Don't navigate
+      }
 
       if (keepLoggedIn) {
         final prefs = await SharedPreferences.getInstance();
@@ -38,7 +51,12 @@ class _FacultyLoginPageState extends State<FacultyLoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => FoodHomePage(token: token)),
+        MaterialPageRoute(
+          builder: (context) => FoodHomePage(
+            token: token, 
+            userData: userData,  // Pass userData
+          ),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

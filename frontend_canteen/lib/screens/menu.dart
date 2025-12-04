@@ -253,6 +253,8 @@ class _FoodUIExactState extends State<FoodHomePage> {
         ? (item['price'] as int).toDouble() 
         : (item['price'] ?? 0.0);
     final String id = item['_id'] ?? '';
+    final String description = item['description'] ?? 'Delicious food item';
+    final String category = item['category'] ?? 'other';
 
     return Container(
       decoration: BoxDecoration(
@@ -300,15 +302,21 @@ class _FoodUIExactState extends State<FoodHomePage> {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.star, color: Colors.yellow, size: 18),
-              Icon(Icons.star, color: Colors.yellow, size: 18),
-              Icon(Icons.star, color: Colors.yellow, size: 18),
-              Icon(Icons.star, color: Colors.yellow, size: 18),
-              Icon(Icons.star, color: Colors.yellow, size: 18),
-            ],
+          // Category badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              category.toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -351,14 +359,16 @@ class _FoodUIExactState extends State<FoodHomePage> {
               ),
             ],
           ),
-          const SizedBox(height: 5),
-          const Text(
-            "1 cup of rice and side dish",
-            style: TextStyle(
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 11,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
