@@ -253,4 +253,81 @@ class ApiService {
       return {'success': false, 'message': 'Error: ${e.toString()}'};
     }
   }
+
+  // UPDATE MENU ITEM (Staff only)
+  static Future<Map<String, dynamic>> updateMenuItem({
+    required String menuId,
+    required String name,
+    required String description,
+    required double price,
+    required String category,
+    required String imageUrl,
+    required String token,
+  }) async {
+    try {
+      print('🔄 UPDATE REQUEST - Menu ID: $menuId');
+      print('📦 Data: name=$name, price=$price, category=$category');
+      
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/menu/$menuId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'name': name,
+          'description': description,
+          'price': price,
+          'category': category,
+          'imageUrl': imageUrl,
+        }),
+      );
+
+      print('✅ UPDATE RESPONSE - Status: ${response.statusCode}');
+      print('📄 Response Body: ${response.body}');
+
+      final Map<String, dynamic> body = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Item updated successfully', 'data': body['data']};
+      } else {
+        return {'success': false, 'message': body['message'] ?? 'Failed to update item'};
+      }
+    } catch (e) {
+      print('❌ UPDATE ERROR: $e');
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
+
+  // DELETE MENU ITEM (Staff only)
+  static Future<Map<String, dynamic>> deleteMenuItem({
+    required String menuId,
+    required String token,
+  }) async {
+    try {
+      print('🗑️ DELETE REQUEST - Menu ID: $menuId');
+      
+      final response = await http.delete(
+        Uri.parse('$baseUrl/api/menu/$menuId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('✅ DELETE RESPONSE - Status: ${response.statusCode}');
+      print('📄 Response Body: ${response.body}');
+
+      final Map<String, dynamic> body = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Item deleted successfully'};
+      } else {
+        return {'success': false, 'message': body['message'] ?? 'Failed to delete item'};
+      }
+    } catch (e) {
+      print('❌ DELETE ERROR: $e');
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
 }

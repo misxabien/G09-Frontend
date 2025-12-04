@@ -22,11 +22,38 @@ class StaffDashboard extends StatefulWidget {
 class _StaffDashboardState extends State<StaffDashboard> {
   late int selectedTab;
   String selectedFilter = "All";
+  Future<List<dynamic>>? _menuFuture;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
     selectedTab = widget.initialTab ?? 0;
+    _refreshMenu();
+  }
+
+  void _refreshMenu() {
+    setState(() {
+      _isRefreshing = true;
+    });
+    
+    _menuFuture = ApiService.fetchMenu(token: widget.token).then((value) {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+      return value;
+    }).catchError((error) {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+      throw error;
+    });
+    
+    setState(() {});
   }
 
   @override
@@ -215,6 +242,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
     final orderNumber = order['orderNumber'] ?? 'N/A';
     final totalAmount = order['totalAmount'] ?? 0;
     final items = order['items'] as List? ?? [];
+    final customerName = order['user']?['firstName'] ?? 'Customer';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -228,13 +256,26 @@ class _StaffDashboardState extends State<StaffDashboard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  orderNumber,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0A57A3),
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      orderNumber,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0A57A3),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      customerName,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -254,15 +295,82 @@ class _StaffDashboardState extends State<StaffDashboard> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              "Total: ₱${totalAmount.toStringAsFixed(2)}",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            const SizedBox(height: 16),
+            
+            // Order Items
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Order Items:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Color(0xFF0A57A3),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...items.map((item) {
+                    final quantity = item['quantity'] ?? 1;
+                    final name = item['name'] ?? 'Unknown Item';
+                    final price = item['price'] ?? 0;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${quantity}x $name',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '₱${(price * quantity).toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              "${items.length} item(s)",
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Total:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  "₱${totalAmount.toStringAsFixed(2)}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0A57A3),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             
@@ -397,7 +505,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    "Add new menu items (Edit/Delete coming soon)",
+                    "Manage your menu items",
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
@@ -405,18 +513,30 @@ class _StaffDashboardState extends State<StaffDashboard> {
                   ),
                 ],
               ),
-              ElevatedButton.icon(
-                onPressed: _showAddMenuItemDialog,
-                icon: const Icon(Icons.add),
-                label: const Text("Add Item"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0A57A3),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: _isRefreshing ? null : _refreshMenu,
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'Refresh Menu',
+                    color: const Color(0xFF0A57A3),
+                    iconSize: 28,
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    onPressed: _showAddMenuItemDialog,
+                    icon: const Icon(Icons.add),
+                    label: const Text("Add Item"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A57A3),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -424,8 +544,10 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
           // Menu Items List
           Expanded(
-            child: FutureBuilder<List<dynamic>>(
-              future: ApiService.fetchMenu(token: widget.token),
+            child: _menuFuture == null
+                ? const Center(child: CircularProgressIndicator())
+                : FutureBuilder<List<dynamic>>(
+                    future: _menuFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -492,6 +614,27 @@ class _StaffDashboardState extends State<StaffDashboard> {
                                 Text(
                                   item['category']?.toString().toUpperCase() ?? 'OTHER',
                                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 18),
+                                      color: _isRefreshing ? Colors.grey : const Color(0xFF0A57A3),
+                                      onPressed: _isRefreshing ? null : () => _showEditMenuItemDialog(item),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, size: 18),
+                                      color: _isRefreshing ? Colors.grey : Colors.red,
+                                      onPressed: _isRefreshing ? null : () => _showDeleteConfirmDialog(item['_id'], item['name']),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -578,7 +721,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
                 if (result['success']) {
                   Navigator.pop(context);
-                  this.setState(() {}); // Refresh list
+                  _refreshMenu(); // Force refresh
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Item added successfully')),
                   );
@@ -592,6 +735,152 @@ class _StaffDashboardState extends State<StaffDashboard> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showEditMenuItemDialog(Map<String, dynamic> item) {
+    final nameController = TextEditingController(text: item['name']);
+    final descController = TextEditingController(text: item['description'] ?? '');
+    final priceController = TextEditingController(text: item['price']?.toString() ?? '');
+    final imageController = TextEditingController(text: item['imageUrl'] ?? '');
+    String selectedCategory = item['category'] ?? 'main';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Edit Menu Item'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(labelText: 'Price'),
+                  keyboardType: TextInputType.number,
+                ),
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  items: ['main', 'beverage', 'snack', 'dessert']
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c.toUpperCase())))
+                      .toList(),
+                  onChanged: (value) => setState(() => selectedCategory = value!),
+                ),
+                TextField(
+                  controller: imageController,
+                  decoration: const InputDecoration(labelText: 'Image URL'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                print('🔵 EDIT BUTTON CLICKED - Item: ${item['_id']}');
+                
+                if (nameController.text.isEmpty || priceController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Name and Price are required')),
+                  );
+                  return;
+                }
+
+                print('📤 Calling updateMenuItem API...');
+                final result = await ApiService.updateMenuItem(
+                  menuId: item['_id'],
+                  name: nameController.text,
+                  description: descController.text,
+                  price: double.tryParse(priceController.text) ?? 0,
+                  category: selectedCategory,
+                  imageUrl: imageController.text.isNotEmpty ? imageController.text : 'default.jpg',
+                  token: widget.token,
+                );
+
+                print('📥 API Response: $result');
+
+                if (!context.mounted) return;
+                
+                Navigator.pop(context);
+                
+                if (result['success']) {
+                  print('✅ Update successful, refreshing UI');
+                  _refreshMenu(); // Force refresh
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Item updated successfully')),
+                  );
+                } else {
+                  print('❌ Update failed: ${result['message']}');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(result['message'])),
+                  );
+                }
+              },
+              child: const Text('Update'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmDialog(String itemId, String itemName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Menu Item'),
+        content: Text('Are you sure you want to delete "$itemName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              print('🔴 DELETE BUTTON CLICKED - Item: $itemId ($itemName)');
+              print('📤 Calling deleteMenuItem API...');
+              
+              final result = await ApiService.deleteMenuItem(
+                menuId: itemId,
+                token: widget.token,
+              );
+
+              print('📥 API Response: $result');
+
+              if (!context.mounted) return;
+              
+              Navigator.pop(context);
+
+              if (result['success']) {
+                print('✅ Delete successful, refreshing UI');
+                _refreshMenu(); // Force refresh
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Item deleted successfully')),
+                );
+              } else {
+                print('❌ Delete failed: ${result['message']}');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(result['message'])),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

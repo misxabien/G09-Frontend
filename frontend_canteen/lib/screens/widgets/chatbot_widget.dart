@@ -95,10 +95,11 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
               item['quantity'] ?? 1,
             );
           }
-        } else if (response['state'] == 'initial') {
+        } else if (response['state'] == 'initial' || response['message'].toLowerCase().contains('order placed')) {
           currentOrder = null; // Reset if order completed or cancelled
-          // Optionally clear local cart too if order was completed/cancelled via chat
-          // Provider.of<CartProvider>(context, listen: false).clearCart();
+          // Clear local cart when order is completed via chatbot
+          final cartProvider = Provider.of<CartProvider>(context, listen: false);
+          cartProvider.clear();
         }
 
         // Add bot response

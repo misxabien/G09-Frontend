@@ -39,6 +39,18 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
       if (result['status'] == "success") {
         final token = result['token'];
         final userData = result['data']?['user'];
+        final actualRole = userData?['userType']?.toString().toLowerCase();
+
+        // VALIDATE: Ensure user is actually a student
+        if (actualRole != 'student') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('This account is for ${actualRole ?? "another role"}. Please use the ${actualRole ?? "correct"} login page.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;  // Don't navigate
+        }
 
         Navigator.pushReplacement(
           context,
